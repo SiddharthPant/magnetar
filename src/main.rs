@@ -1,22 +1,18 @@
 use axum::{Router, http::StatusCode, response::Html, routing::get};
 
 use tower_http::trace::{DefaultOnResponse, TraceLayer};
-use tracing::Level;
 use tracing_subscriber::{EnvFilter, fmt};
 
 #[tokio::main]
 async fn main() {
     fmt().with_env_filter(EnvFilter::from_default_env()).init();
-    let app = Router::new()
-        .route("/", get(home))
-        .route("/healthz", get(healthz))
-        .layer(
-            TraceLayer::new_for_http().on_response(
-                DefaultOnResponse::new()
-                    .level(Level::INFO)
-                    .latency_unit(tower_http::LatencyUnit::Micros),
-            ),
-        );
+    let app =
+        Router::new()
+            .route("/", get(home))
+            .route("/healthz", get(healthz))
+            .layer(TraceLayer::new_for_http().on_response(
+                DefaultOnResponse::new().latency_unit(tower_http::LatencyUnit::Micros),
+            ));
 
     let port: u16 = std::env::var("PORT")
         .ok()
