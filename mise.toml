@@ -10,4 +10,4 @@ watchexec = "latest"
 _.file = [".env", ".env.local"]
 
 [tasks."dev:server"]
-run = "bacon run"
+run = "watchexec -r -e rs -- cargo run"
