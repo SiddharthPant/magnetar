@@ -4,9 +4,10 @@
 "github:nats-io/nats-server" = "latest"
 "github:nats-io/natscli" = "latest"
 rust = "1.96.0"
+watchexec = "latest"
 
 [env]
 _.file = [".env", ".env.local"]
 
-[tasks.hello]
-run = "echo magnetar online"
+[tasks."dev:server"]
+run = "bacon run"
