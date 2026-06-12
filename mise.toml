@@ -1,0 +1,12 @@
+[tools]
+"cargo:bacon" = "latest"
+"cargo:sqlx-cli" = "latest"
+"github:nats-io/nats-server" = "latest"
+"github:nats-io/natscli" = "latest"
+rust = "1.96.0"
+
+[env]
+_.file = [".env", ".env.local"]
+
+[tasks.hello]
+run = "echo magnetar online"
