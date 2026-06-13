@@ -4,10 +4,11 @@
 "github:nats-io/nats-server" = "latest"
 "github:nats-io/natscli" = "latest"
 rust = "1.96.0"
+rust-analyzer = "latest"
 watchexec = "latest"
 
 [env]
 _.file = [".env", ".env.local"]
 
 [tasks."dev:server"]
-run = "watchexec -r -e rs -- cargo run"
+run = "watchexec -r -e rs,html -- cargo run"
