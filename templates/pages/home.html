@@ -2,6 +2,10 @@
 {% block content %}
 <div data-signals="{count: 0}">
     <span id="count" data-text="$count"></span>
-    <button data-on-click="@post('/commands/increment')">+1</button>
+    <div data-show="$fetching">Loading...</div>
+    <button data-on:click="@post('/commands/increment')" data-indicator:fetching
+            data-attr:disabled="$fetching">+1</button>
+    <button data-on:click="@post('/commands/increment-elements')" data-indicator:fetching
+            data-attr:disabled="$fetching">+1 (elements)</button>
 </div>
 {% endblock %}
