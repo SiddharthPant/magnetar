@@ -1,0 +1,25 @@
+{% extends "layouts/base.html" %}
+{% block content %}
+<div data-signals='{"name": "", "url": ""}'>
+    <h1>Monitors</h1>
+
+    <form id="monitor-form">
+        <input type="text" name="name" placeholder="Name" data-bind="name" />
+        <input type="text" name="url" placeholder="https://example.com" data-bind="url" />
+        <button
+            type="button"
+            data-on:click="@post('/commands/monitors/create')"
+            data-indicator:fetching
+            data-attr:disabled="$fetching"
+        >
+            Add
+        </button>
+    </form>
+
+    <div id="form-errors"></div>
+
+    <div id="monitor-list">
+        {% include "fragments/monitor_list.html" %}
+    </div>
+</div>
+{% endblock %}

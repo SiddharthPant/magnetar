@@ -12,3 +12,15 @@ _.file = [".env", ".env.local"]
 
 [tasks."dev:server"]
 run = "watchexec -r -e rs,html -- cargo run"
+
+[tasks."db:up"]
+run = "docker compose up -d db"
+
+[tasks."db:down"]
+run = "docker compose down db"
+
+[tasks."db:prompt"]
+run = "docker compose exec db psql -U postgres -d app_db"
+
+[tasks."db:migrate"]
+run = "sqlx migrate run"

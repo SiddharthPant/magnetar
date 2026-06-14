@@ -1,0 +1,22 @@
+{% if monitors.is_empty() %}
+<p>No monitors yet.</p>
+{% else %}
+<ul>
+    {% for m in monitors %}
+    <li>
+        <strong>{{ m.name }}</strong>
+        <a href="{{ m.url }}" target="_blank">{{ m.url }}</a>
+        <span>every {{ m.interval_seconds }}s</span>
+        <span>created {{ m.created_at }}s</span>
+        <span>updated {{ m.updated_at }}s</span>
+        <button
+            data-on:click="@post('/commands/monitors/{{ m.id }}/delete')"
+            data-indicator:fetching
+            data-attr:disabled="$fetching"
+        >
+            Delete
+        </button>
+    </li>
+    {% endfor %}
+</ul>
+{% endif %}

@@ -1,7 +1,7 @@
 {% extends "layouts/base.html" %}
 {% block content %}
 <div data-signals="{count: 0}">
-    <span id="count" data-text="$count"></span>
+    {% include "fragments/count.html" %}
     <div data-show="$fetching">Loading...</div>
     <button data-on:click="@post('/commands/increment')" data-indicator:fetching
             data-attr:disabled="$fetching">+1</button>

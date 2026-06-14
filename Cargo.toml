@@ -10,7 +10,17 @@ axum = "0.8.9"
 datastar = { version = "0.3.1", features = ["axum"] }
 futures = "0.3.32"
 serde = { version = "1.0.228", features = ["derive"] }
+sqlx = { version = "0.9.0", features = [
+  "postgres",
+  "runtime-tokio",
+  "uuid",
+  "time",
+  "migrate",
+] }
+time = { version = "0.3.49", features = ["serde"] }
 tokio = { version = "1.52.3", features = ["full"] }
-tower-http = { version = "0.6.11", features = ["fs", "trace"] }
+tower-http = { version = "0.7.0", features = ["fs", "trace"] }
 tracing = "0.1.44"
 tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
+url = "2.5.8"
+uuid = { version = "1.23.3", features = ["v7", "serde"] }
