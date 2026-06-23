@@ -59,4 +59,4 @@ jj git push --bookmark main
 
 ---
 
-Built following the course in [`../magnetar-docs`](../magnetar-docs/README.md).
+Built following the course in [`.plans/magnetar`](.plans/magnetar/README.md).
