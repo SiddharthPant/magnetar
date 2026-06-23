@@ -18,8 +18,6 @@
 
     <div id="form-errors"></div>
 
-    <div id="monitor-list">
-        {% include "fragments/monitor_list.html" %}
-    </div>
+    <div id="monitor-list" data-init="@get('/feeds/monitors')"></div>
 </div>
 {% endblock %}

@@ -10,8 +10,14 @@ watchexec = "latest"
 [env]
 _.file = [".env", ".env.local"]
 
+[tasks."dev:nats"]
+run = "nats-server -js -sd ./.data/nats"
+
 [tasks."dev:server"]
 run = "watchexec -r -e rs,html -- cargo run"
+
+[tasks.dev]
+depends = ["dev:nats", "dev:server"]
 
 [tasks."db:up"]
 run = "docker compose up -d db"

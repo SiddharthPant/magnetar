@@ -1,18 +1,23 @@
+mod subjects;
 use axum::extract::{Path, State};
-use std::{convert::Infallible, time::Duration};
+use std::{
+    convert::Infallible,
+    sync::atomic::{AtomicU64, Ordering},
+    time::Duration,
+};
 use uuid::Uuid;
 
 use askama::Template;
-use axum::response::sse::{Event, Sse};
+use axum::response::sse::{Event, KeepAlive, Sse};
 use axum::routing::post;
 use axum::{
     Router,
     http::StatusCode,
-    response::{Html, IntoResponse},
+    response::{Html, IntoResponse, Response},
     routing::get,
 };
 use datastar::consts::ElementPatchMode;
-use futures::stream;
+use futures::{StreamExt, stream};
 
 use datastar::patch_elements::PatchElements;
 use datastar::{axum::ReadSignals, patch_signals::PatchSignals};
@@ -36,7 +41,12 @@ async fn main() {
         .await
         .expect("can't connect to database");
 
-    let state = AppState { db: pool };
+    let nats_url = std::env::var("NATS_URL").unwrap();
+    let nats = async_nats::connect(&nats_url)
+        .await
+        .expect("can't connect to nats");
+
+    let state = AppState { db: pool, nats };
 
     let app =
         Router::new()
@@ -45,6 +55,7 @@ async fn main() {
             .route("/commands/increment", post(increment_signals))
             .route("/commands/increment-elements", post(increment_elements))
             .route("/monitors", get(monitors_page))
+            .route("/feeds/monitors", get(monitors_feed))
             .route("/commands/monitors/create", post(create_monitor))
             .route("/commands/monitors/{id}/delete", post(delete_monitor))
             .nest_service("/assets", ServeDir::new("assets"))
@@ -64,6 +75,7 @@ async fn main() {
 #[derive(Clone)]
 struct AppState {
     db: PgPool,
+    nats: async_nats::Client,
 }
 
 struct AppError(anyhow::Error);
@@ -98,6 +110,18 @@ fn sse_events(events: Vec<Event>) -> impl IntoResponse {
     Sse::new(stream::iter(events.into_iter().map(Ok::<_, Infallible>)))
 }
 
+static NEXT_FEED_ID: AtomicU64 = AtomicU64::new(1);
+
+struct FeedConnectionLog {
+    id: u64,
+}
+
+impl Drop for FeedConnectionLog {
+    fn drop(&mut self) {
+        tracing::info!(feed_id = self.id, "monitor feed disconnected");
+    }
+}
+
 #[derive(Template)]
 #[template(path = "pages/home.html")]
 struct HomePage {
@@ -127,9 +151,7 @@ struct Monitor {
 
 #[derive(Template)]
 #[template(path = "pages/monitors.html")]
-struct MonitorsPage {
-    monitors: Vec<Monitor>,
-}
+struct MonitorsPage {}
 
 #[derive(Template)]
 #[template(path = "fragments/monitor_list.html")]
@@ -181,9 +203,8 @@ async fn load_monitors(db: &PgPool) -> Result<Vec<Monitor>, AppError> {
     Ok(monitors)
 }
 
-async fn monitors_page(State(state): State<AppState>) -> Result<Html<String>, AppError> {
-    let monitors = load_monitors(&state.db).await?;
-    render(&MonitorsPage { monitors })
+async fn monitors_page() -> Result<Html<String>, AppError> {
+    render(&MonitorsPage {})
 }
 
 fn monitor_list_patch(monitors: Vec<Monitor>) -> Result<PatchElements, AppError> {
@@ -197,7 +218,7 @@ fn monitor_list_patch(monitors: Vec<Monitor>) -> Result<PatchElements, AppError>
 async fn create_monitor(
     State(state): State<AppState>,
     ReadSignals(signals): ReadSignals<MonitorSignals>,
-) -> Result<impl IntoResponse, AppError> {
+) -> Result<Response, AppError> {
     let name = signals.name.trim().to_string();
     let url = signals.url.trim().to_string();
 
@@ -206,7 +227,7 @@ async fn create_monitor(
             r#"<div id="form-errors">Name is required and URL must be valid.</div>"#,
         );
 
-        return Ok(sse_events(vec![Event::from(patch)]));
+        return Ok(sse_events(vec![Event::from(patch)]).into_response());
     }
 
     sqlx::query!(
@@ -217,27 +238,54 @@ async fn create_monitor(
     .execute(&state.db)
     .await?;
 
-    let monitors = load_monitors(&state.db).await?;
-    let list_patch = monitor_list_patch(monitors)?;
-    let clear_signals = PatchSignals::new(r#"{"name": "", "url": ""}"#);
-    let clear_errors = PatchElements::new(r#"<div id="form-errors"></div>"#);
+    state
+        .nats
+        .publish(subjects::MONITORS_CHANGED, "".into())
+        .await?;
 
-    Ok(sse_events(vec![
-        Event::from(list_patch),
-        Event::from(clear_signals),
-        Event::from(clear_errors),
-    ]))
+    Ok(StatusCode::NO_CONTENT.into_response())
 }
 
 async fn delete_monitor(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
-) -> Result<impl IntoResponse, AppError> {
+) -> Result<StatusCode, AppError> {
     sqlx::query!("delete from monitors where id = $1", id)
         .execute(&state.db)
         .await?;
-    let monitors = load_monitors(&state.db).await?;
-    let patch = monitor_list_patch(monitors)?;
 
-    Ok(sse_events(vec![Event::from(patch)]))
+    state
+        .nats
+        .publish(subjects::MONITORS_CHANGED, "".into())
+        .await?;
+    Ok(StatusCode::NO_CONTENT)
+}
+
+async fn monitors_feed(State(state): State<AppState>) -> Result<impl IntoResponse, AppError> {
+    let feed_id = NEXT_FEED_ID.fetch_add(1, Ordering::Relaxed);
+    tracing::info!(feed_id, "monitor feed connected");
+
+    let initial_patch = monitor_list_patch(load_monitors(&state.db).await?)?;
+    let mut sub = state.nats.subscribe(subjects::MONITORS_EVENTS).await?;
+    let db = state.db.clone();
+
+    let events = async_stream::stream! {
+        let _connection_log = FeedConnectionLog {id: feed_id};
+
+        yield Ok::<_, Infallible>(Event::from(initial_patch));
+
+        while let Some(_msg) = sub.next().await {
+            match load_monitors(&db).await.and_then(monitor_list_patch) {
+                Ok(patch) => {
+                    tracing::debug!(feed_id, "refreshing monitor feed");
+                    yield Ok::<_, Infallible>(Event::from(patch));
+                }
+                Err(err) => {
+                    tracing::error!("failed to refresh monitor feed: {}", err.0)
+                }
+            }
+        }
+    };
+
+    Ok(Sse::new(events).keep_alive(KeepAlive::default()))
 }
