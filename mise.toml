@@ -10,11 +10,14 @@ watchexec = "latest"
 [env]
 _.file = [".env", ".env.local"]
 
+[tasks.check]
+run = "cargo clippy --workspace --all-targets -- -D warnings"
+
 [tasks."dev:nats"]
 run = "nats-server -js -sd ./.data/nats"
 
 [tasks."dev:server"]
-run = "watchexec -r -e rs,html -- cargo run"
+run = "watchexec -r -e rs,html -- cargo run -p server"
 
 [tasks.dev]
 depends = ["dev:nats", "dev:server"]

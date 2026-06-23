@@ -7,6 +7,14 @@ end; `jj diff` shows only moves and plumbing.
 **Concepts:** cargo workspaces, workspace-level dependency management, crate
 boundaries as architecture, the shared `bootstrap()` that all binaries use.
 
+**Status:** complete in `/Users/sid/projects/playground/magnetar`. The app is
+split into `crates/{core,db,bus,web}` and `apps/server`, templates live under
+`crates/web/templates`, `bootstrap()` lives in `magnetar-core`, `mise` runs the
+server with `cargo run -p server`, and the two-browser live-update test passes.
+After the refactor, app log targets come from the `server` crate, so
+`.env.local` should use `server=debug` rather than `magnetar=debug` when
+checking feed connect/disconnect and refresh logs.
+
 ---
 
 ## 1. Target shape
@@ -101,15 +109,15 @@ the change into "move templates" / "move queries" / "workspace plumbing".
 
 ## Checkpoints
 
-- [ ] App behaves exactly as at the end of phase 4 (two-browser test again).
-- [ ] `cargo build -p server` works; `cargo clippy --workspace` is clean.
-- [ ] No version numbers in member `Cargo.toml`s — all `workspace = true`.
-- [ ] You can state the dependency direction from memory and name where
+- [x] App behaves exactly as at the end of phase 4 (two-browser test again).
+- [x] `cargo build -p server` works; `cargo clippy --workspace` is clean.
+- [x] No version numbers in member `Cargo.toml`s — all `workspace = true`.
+- [x] You can state the dependency direction from memory and name where
       `bootstrap` lives and why.
 
 ## Stretch goals
 
-- `cargo deny` or at least `cargo tree -d` to spot duplicate dep versions.
+- [x] `cargo deny` or at least `cargo tree -d` to spot duplicate dep versions.
 - A `crates/web` unit test that renders one fragment with fixture data and
   asserts on the string — the cheapest UI regression net you'll ever buy.
 

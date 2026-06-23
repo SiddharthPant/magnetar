@@ -1,9 +1,8 @@
-[package]
-name = "magnetar"
-version = "0.1.0"
-edition = "2024"
+[workspace]
+members = ["crates/*", "apps/*"]
+resolver = "2"
 
-[dependencies]
+[workspace.dependencies]
 anyhow = "1.0.102"
 askama = "0.16.0"
 async-nats = "0.49.1"
@@ -26,3 +25,8 @@ tracing = "0.1.44"
 tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
 url = "2.5.8"
 uuid = { version = "1.23.3", features = ["v7", "serde"] }
+
+magnetar-core = { path = "crates/core" }
+magnetar-db = { path = "crates/db" }
+magnetar-bus = { path = "crates/bus" }
+magnetar-web = { path = "crates/web" }

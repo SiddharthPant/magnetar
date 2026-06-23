@@ -20,6 +20,9 @@ mise run dev:server
 
 Server runs at http://localhost:3000 (`/healthz` for liveness).
 
+`bootstrap()` lives in `magnetar-core` because every binary needs the same
+shared runtime context: config, Postgres, and NATS.
+
 ## Configuration
 
 Env files are layered by mise (`mise.toml → [env]`):

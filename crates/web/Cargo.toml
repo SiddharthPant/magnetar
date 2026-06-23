@@ -1,0 +1,11 @@
+[package]
+name = "magnetar-web"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = { workspace = true }
+askama = { workspace = true }
+axum = { workspace = true }
+datastar = { workspace = true }
+magnetar-db = { workspace = true }
