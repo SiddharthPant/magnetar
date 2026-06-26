@@ -118,7 +118,7 @@ the change into "move templates" / "move queries" / "workspace plumbing".
 ## Stretch goals
 
 - [x] `cargo deny` or at least `cargo tree -d` to spot duplicate dep versions.
-- A `crates/web` unit test that renders one fragment with fixture data and
+- [x] A `crates/web` unit test that renders one fragment with fixture data and
   asserts on the string — the cheapest UI regression net you'll ever buy.
 
 Next: `06-worker-and-jobs.md` — the second process.

@@ -48,3 +48,35 @@ pub fn monitor_list_patch(monitors: Vec<Monitor>) -> anyhow::Result<PatchElement
         .selector("#monitor-list")
         .mode(ElementPatchMode::Inner))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use magnetar_db::Monitor;
+    use time::OffsetDateTime;
+    use uuid::Uuid;
+
+    fn fixture_monitor() -> Monitor {
+        let now = OffsetDateTime::from_unix_timestamp(1_700_000_000).unwrap();
+
+        Monitor {
+            id: Uuid::nil(),
+            name: "Example monitor".to_string(),
+            url: "https://example.com".to_string(),
+            interval_seconds: 60,
+            created_at: now,
+            updated_at: now,
+        }
+    }
+
+    #[test]
+    fn monitor_list_patch_renders_monitor_fragment() {
+        let rendered = render(&MonitorListFragment {
+            monitors: vec![fixture_monitor()],
+        })
+        .unwrap();
+
+        assert!(rendered.0.contains("Example monitor"));
+        assert!(rendered.0.contains("https://example"));
+    }
+}

@@ -9,3 +9,7 @@ askama = { workspace = true }
 axum = { workspace = true }
 datastar = { workspace = true }
 magnetar-db = { workspace = true }
+
+[dev-dependencies]
+time.workspace = true
+uuid.workspace = true
