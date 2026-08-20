@@ -1,0 +1,21 @@
+services:
+  db:
+    image: postgres:18.6-alpine3.24
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER must be configured}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be configured}
+      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB must be configured}
+    ports: ["${POSTGRES_HOST_PORT:?POSTGRES_HOST_PORT must be configured}:5432"]
+    volumes: [pgdata:/var/lib/postgresql]
+    healthcheck:
+      test:
+        [
+           "CMD-SHELL",
+           "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata:
