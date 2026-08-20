@@ -24,3 +24,7 @@ exec watchexec --restart \
 [tasks.lint]
 description = 'Run Clippy'
 run = 'cargo clippy --all-targets --all-features -- -D warnings'
+
+[tasks."db:prompt"]
+description = "Open a PostgreSQL prompt"
+run = 'docker compose exec db psql "$DATABASE_URL"'

@@ -6,6 +6,7 @@ pub struct Config {
     pub app_display_name: String,
     pub bind_addr: SocketAddr,
     pub database_url: String,
+    pub seed_password: String,
 }
 
 fn env_get(name: &str, default: &str) -> Result<String> {
@@ -31,11 +32,13 @@ impl Config {
             .parse()
             .context("invalid APP_HOST or APP_PORT")?;
         let database_url = env_get("DATABASE_URL", "sqlite://.locals/data/life.db?mode=rwc")?;
+        let seed_password = env_get("SEED_PASSWORD", "asdasd1234")?;
 
         Ok(Self {
             app_display_name,
             bind_addr,
             database_url,
+            seed_password,
         })
     }
 }
