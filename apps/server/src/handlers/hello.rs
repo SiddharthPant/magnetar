@@ -4,7 +4,7 @@ use axum::{Router, extract, response::IntoResponse, routing::get};
 use crate::response::HtmlTemplate;
 
 pub fn routes() -> Router {
-    Router::new().route("/hello/{name}", get(hello))
+    Router::new().route("/{name}", get(hello))
 }
 
 #[derive(Template)]
