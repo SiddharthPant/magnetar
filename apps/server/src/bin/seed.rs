@@ -26,10 +26,10 @@ async fn seed_user(pool: &PgPool, password: &str) -> anyhow::Result<()> {
                 password_hash = excluded.password_hash,
                 updated_at = now()
             RETURNING created_at, updated_at
-            ",
+        ",
     )
     .bind(id)
-    .bind(prefixed_nanoid("usr"))
+    .bind(prefixed_nanoid("usr", 16, true))
     .bind("Development Admin")
     .bind("admin@example.test")
     .bind(password_hash)
