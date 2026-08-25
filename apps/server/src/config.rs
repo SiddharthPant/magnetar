@@ -42,17 +42,3 @@ impl Config {
         })
     }
 }
-
-pub struct NanoidConfig {
-    is_seed_fixed: bool,
-    length: usize
-}
-
-impl Default for NanoidConfig {
-    fn default() -> Self {
-        NanoidConfig {
-            is_seed_fixed: false,
-            length: 16
-        }
-    }
-}

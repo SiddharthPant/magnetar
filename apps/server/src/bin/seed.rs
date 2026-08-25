@@ -1,44 +1,71 @@
 use anyhow::Context;
 use server::{auth::password::hash_password, config::Config, utils::nanoid::prefixed_nanoid};
-use sqlx::{PgPool, postgres::PgPoolOptions, query_as};
+use sqlx::{PgPool, postgres::PgPoolOptions};
 use time::OffsetDateTime;
 use uuid::Uuid;
 
+#[allow(dead_code)]
+#[derive(Debug)]
+struct User {
+    id: Uuid,
+    pid: String,
+    full_name: String,
+    email: String,
+    created_at: OffsetDateTime,
+    updated_at: OffsetDateTime,
+}
+
+#[derive(Debug, Clone, Copy)]
+struct UserFixture {
+    name: &'static str,
+    email: &'static str,
+}
+
 async fn seed_user(pool: &PgPool, password: &str) -> anyhow::Result<()> {
     let password_hash = hash_password(password)?;
-    let id = Uuid::parse_str("01a02165-7ef5-77dd-8436-351807373dd3")?;
+    let user_fixtures: [UserFixture; 3] = [
+        UserFixture {
+            name: "Admin User",
+            email: "admin@example.test",
+        },
+        UserFixture {
+            name: "Test User",
+            email: "test@example.test",
+        },
+        UserFixture {
+            name: "Guest User",
+            email: "guest@example.test",
+        },
+    ];
 
     let mut transaction = pool.begin().await?;
-
-    let (created_at, updated_at): (OffsetDateTime, OffsetDateTime) = query_as(
-        "
-            INSERT INTO users (
+    for (i, user_data) in user_fixtures.iter().enumerate() {
+        let user = sqlx::query_as!(
+            User,
+            r#"
+            insert into users (
                 id,
                 pid,
                 full_name,
                 email,
                 password_hash
             )
-            VALUES ($1, $2, $3, $4, $5)
-            ON CONFLICT (id) DO UPDATE SET
-                full_name = excluded.full_name,
-                email = excluded.email,
-                password_hash = excluded.password_hash,
-                updated_at = now()
-            RETURNING created_at, updated_at
-        ",
-    )
-    .bind(id)
-    .bind(prefixed_nanoid("usr", 16, true))
-    .bind("Development Admin")
-    .bind("admin@example.test")
-    .bind(password_hash)
-    .fetch_one(&mut *transaction)
-    .await?;
+            values ($1, $2, $3, $4, $5)
+            returning id, pid, full_name, email, created_at, updated_at
+        "#,
+            Uuid::now_v7(),
+            prefixed_nanoid("usr", Some(i.try_into()?)),
+            user_data.name,
+            user_data.email,
+            password_hash
+        )
+        .fetch_one(&mut *transaction)
+        .await
+        .context(format!("inserting failed for user_data: {user_data:?}"))?;
 
+        println!("seeded user: {user:?}");
+    }
     transaction.commit().await?;
-
-    println!("seeded user: created={created_at}, updated={updated_at}");
 
     Ok(())
 }

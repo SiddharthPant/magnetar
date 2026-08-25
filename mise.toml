@@ -25,6 +25,22 @@ exec watchexec --restart \
 description = 'Run Clippy'
 run = 'cargo clippy --all-targets --all-features -- -D warnings'
 
-[tasks."db:prompt"]
-description = "Open a PostgreSQL prompt"
+[tasks.'db:prompt']
+description = 'Open a PostgreSQL prompt'
 run = 'docker compose exec db psql "$DATABASE_URL"'
+
+[tasks.format]
+description = 'Format Rust code'
+run = '''
+cargo fmt --all
+'''
+
+[tasks.'format:check']
+description = 'Check Rust code formatting'
+run = '''
+cargo fmt --all -- --check
+'''
+
+[tasks.ci]
+description = 'Run local CI checks'
+depends = ['format:check', 'lint']
