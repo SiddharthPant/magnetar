@@ -12,17 +12,17 @@ pub fn prefixed_nanoid(prefix: &str, seed_value: Option<u64>) -> String {
         'w', 'x', 'y', 'z',
     ];
 
-    let id: String;
-    if let Some(seed) = seed_value {
-        let mut rng = StdRng::seed_from_u64(seed);
-        id = nanoid!(LENGTH, &alphabet, |size| {
-            let mut bytes = vec![0u8; size];
-            rng.fill(&mut bytes[..]);
-            bytes
-        });
-    } else {
-        id = nanoid!(LENGTH, &alphabet)
-    }
+    let id = seed_value.map_or_else(
+        || nanoid!(LENGTH, &alphabet),
+        |seed| {
+            let mut rng = StdRng::seed_from_u64(seed);
+            nanoid!(LENGTH, &alphabet, |size| {
+                let mut bytes = vec![0u8; size];
+                rng.fill(&mut bytes[..]);
+                bytes
+            })
+        },
+    );
 
     format!("{prefix}_{id}")
 }

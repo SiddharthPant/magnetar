@@ -8,6 +8,7 @@ anyhow = { workspace = true }
 argon2 = { workspace = true }
 askama = { workspace = true }
 axum = { workspace = true }
+blake3 = "1.8.7"
 datastar = { workspace = true }
 fake = { workspace = true }
 nanoid = { workspace = true }
